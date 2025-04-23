@@ -1,43 +1,22 @@
-
-
-
-
-
-
-
-
-
+from ultralytics import YOLO
 import cv2
-import numpy as np
-# import easyocr
 
-# img = cv2.imread("image.jpg")
-cap = cv2.VideoCapture(0)
-# text = easyocr.Reader(['en'])
+# Загружаем предобученную модель YOLOv8
+model = YOLO("yolov8n.pt")  # Можно взять yolov8s или yolov8m для большей точности
 
-while True:
-    success, img = cap.read()
+# Загружаем изображение
+img_path = "car.jpg"
+img = cv2.imread(img_path)
 
-    # Перевод в чб
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+# Детектим объекты
+results = model(img)[0]  # первый кадр (т.к. возвращается batch)
 
-    plate = cv2.CascadeClassifier('../pythonProject/plate.xml')
-
-    res = plate.detectMultiScale(gray, scaleFactor=1.5, minNeighbors=1)
-
-    for (x, y, w, h) in res:
-        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), thickness=3)
-        plate_image = img[y:y+h, x:x+w]
-        # text = text.readtext(plate_image)
-        # print(text)
-
-
-
-
-
-    # img = cv2.bitwise_and(img, img, mask=res)
-
-    cv2.imshow('res', plate_image)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+# Проходим по найденным объектам
+for box in results.boxes:
+    cls = int(box.cls[0])
+    conf = float(box.conf[0])
+    if results.names[cls] in ['car', 'truck', 'bus']:  # фильтруем только автомобили
+        x1, y1, x2, y2 = map(int, box.xyxy[0])
+        cropped = img[y1:y2, x1:x2]
+        cv2.imwrite("Ml_color/car.jpg", cropped)
+        print(f"Сохранил обрезанный фрагмент машины: {x1}, {y1}, {x2}, {y2}")
