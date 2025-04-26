@@ -71,6 +71,34 @@ def predict_color(pil_image: Image.Image, model, transform, class_names, device,
     return predicted_color
 
 
+def predict_brand(pil_image: Image.Image, model, transform, class_names, device, visualize=False):
+    """
+    Предсказывает марку автомобиля по изображению с помощью обученной модели.
+
+    :param pil_image: PIL.Image - изображение автомобиля
+    :param model: torch.nn.Module - загруженная модель марки
+    :param transform: torchvision.transforms - преобразования для входа
+    :param class_names: list - список названий марок
+    :param device: torch.device - устройство для инференса
+    :param visualize: bool - визуализировать результат
+    :return: str - предсказанная марка
+    """
+    image_tensor = transform(pil_image).unsqueeze(0).to(device)
+
+    with torch.no_grad():
+        output = model(image_tensor)
+        _, predicted = torch.max(output, 1)
+        predicted_brand = class_names[predicted.item()]
+
+    if visualize:
+        plt.imshow(pil_image)
+        plt.title(f"Предсказанная марка: {predicted_brand}")
+        plt.axis('off')
+        plt.show()
+
+    return predicted_brand
+
+
 def detect_license_plate(img_pil: Image.Image, use_gpu: bool = False, visualize: bool = False, reader=None) -> str:
     """
     Распознаёт госномер на изображении автомобиля с помощью easyocr.
